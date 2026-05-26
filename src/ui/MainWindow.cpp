@@ -6,6 +6,10 @@
 #include <qlabel.h>
 #include <qwidget.h>
 #include<QVBoxLayout>
+#include "components/FileView.hpp"
+#include <QPushButton>
+#include <QLineEdit>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -33,14 +37,22 @@ MainWindow::MainWindow(QWidget *parent)
     auto *contentLayout = new QVBoxLayout(content);
 
     // pathBar
-    auto *pathBar = new QLabel("home");
+    auto *topBar = new QHBoxLayout();
+    auto *upButton = new QPushButton("↑");
+    
+    auto *pathBar = new QLineEdit();
+    
+    topBar->addWidget(upButton);
+    topBar->addWidget(pathBar);
+    contentLayout->addLayout(topBar);
+
     pathBar->setFixedHeight(40);
     pathBar->setStyleSheet("background:#503030; padding:5px;");
-    contentLayout->addWidget(pathBar);
-
+    pathBar->setText(QDir::homePath());
+    
 
     // fileView
-    auto *fileView = new QWidget();
+    auto *fileView = new FileView(NULL,upButton,pathBar);
     fileView->setStyleSheet("background:#303030;");
     contentLayout->addWidget(fileView);
 
@@ -58,5 +70,5 @@ MainWindow::MainWindow(QWidget *parent)
     splitter->setChildrenCollapsible(false);
 
 
-    setWindowIcon(QIcon("../../resources/icons/icon.png"));
+    setWindowIcon(QIcon("../../resources/icons/test2.jpg"));
 }

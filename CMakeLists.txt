@@ -10,8 +10,9 @@ qt_standard_project_setup()
 
 qt_add_executable(${PROJECT_NAME} 
         src/main.cpp
-        src/window/MainWindow.cpp      
+        src/ui/MainWindow.cpp      
         resources/resources.qrc  
+        src/ui/components/FileView.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets)
