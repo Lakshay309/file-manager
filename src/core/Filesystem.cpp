@@ -283,7 +283,7 @@ bool FileSystem::openWith(const std::filesystem::path& app, const std::filesyste
         return false;  // File doesn't exist
     }
 
-#if defined(__linux__)
+    #if defined(__linux__)
 
     pid_t pid =fork();
     if(pid<0){
@@ -296,7 +296,7 @@ bool FileSystem::openWith(const std::filesystem::path& app, const std::filesyste
 
     return true;
 
-#elif defined(_WIN32) || defined(_WIN64) 
+    #elif defined(_WIN32) || defined(_WIN64) 
 
     // ── Windows ──────────────────────────────────────────────────────────────
     // TODO: Use ShellExecuteW or CreateProcess
@@ -313,7 +313,7 @@ bool FileSystem::openWith(const std::filesystem::path& app, const std::filesyste
     // return ((INT_PTR)result > 32);   // ShellExecute returns > 32 on success
     return false;  // Remove this line once implemented
 
-#elif defined(__APPLE__)
+    #elif defined(__APPLE__)
     // ── macOS ────────────────────────────────────────────────────────────────
     // TODO: Use the 'open' command with -a flag
     // Example skeleton:
@@ -323,10 +323,10 @@ bool FileSystem::openWith(const std::filesystem::path& app, const std::filesyste
     // return (result == 0);
     return false;  // Remove this line once implemented
 
-#else
+    #else
     // ── Unsupported Platform ─────────────────────────────────────────────────
     return false;
-#endif
+    #endif
 }
 
 
