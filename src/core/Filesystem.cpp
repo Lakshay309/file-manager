@@ -1,4 +1,5 @@
 #include "Filesystem.hpp"
+#include <cstdlib>
 #include <unistd.h>
 
 
@@ -269,6 +270,11 @@ Properties FileSystem::getProperties(std::filesystem::path path) {
     };
 }
 
+
+void FileSystem::toHome(){
+    char* home = std::getenv("HOME");
+    mainFilePath = home;
+}
 
 
 // ─────────────────────────────────────────────

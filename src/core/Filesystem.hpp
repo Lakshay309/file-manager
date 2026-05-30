@@ -75,6 +75,7 @@ public:
     std::filesystem::path getCurrentFilePath();
     void updatePath(std::filesystem::path newPath);
     void toParent();
+    void toHome();
 
     // File listing
     std::vector<File> getAllFileInCurrentDir();

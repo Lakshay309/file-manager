@@ -12,7 +12,6 @@ qt_add_executable(${PROJECT_NAME}
         src/main.cpp
         src/ui/MainWindow.cpp      
         resources/resources.qrc  
-        src/ui/components/FileView.cpp
         src/core/Filesystem.cpp
         src/core/AppManager.cpp
 )
