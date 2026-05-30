@@ -201,17 +201,21 @@ void FileSystem::cut(const std::string name) {
 
 // Pastes the clipboard file into the current directory
 bool FileSystem::paste() {
-    if (clipboard.action == ClipboardAction::None) return false;
+    if (clipboard.action == ClipboardAction::None) 
+        return false;
 
     auto target = mainFilePath / clipboard.path.filename();
 
     try {
         // Don't paste if destination already exists or source == destination
-        if (std::filesystem::exists(target) ||
-            (std::filesystem::exists(clipboard.path) &&
-             std::filesystem::equivalent(clipboard.path, target))) {
-            return false;
-        }
+        // if (std::filesystem::exists(target) ||
+        //     (std::filesystem::exists(clipboard.path) &&
+        //     std::filesystem::equivalent(clipboard.path, target))) {
+        //     return false;
+        // }
+        if (std::filesystem::exists(target)) return false;
+        if (clipboard.path == target)        return false;
+
 
         if (clipboard.action == ClipboardAction::Copy) {
             if (std::filesystem::is_directory(clipboard.path)) {

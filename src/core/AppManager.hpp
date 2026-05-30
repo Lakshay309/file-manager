@@ -9,7 +9,7 @@ struct AppInfo {
     std::string              executable;
     std::filesystem::path    execPath;
     std::string              icon;
-    std::vector<std::string> mineTypes;
+    std::vector<std::string> mimeTypes;
 };
 
 class AppManager{

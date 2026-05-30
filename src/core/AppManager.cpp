@@ -32,7 +32,7 @@ std::vector<AppInfo> AppManager::getAppForFile(const std::filesystem::path& file
 
     std::vector<AppInfo> matching;
     for(const auto& app: cachedApps_){
-        for(const auto& supported:app.mineTypes){
+        for(const auto& supported:app.mimeTypes){
             if(supported==mime){
                 matching.push_back(app);
                 break;
@@ -146,8 +146,8 @@ AppInfo AppManager::parseDesktopFile(const std::filesystem::path& path) {
 
     while(std::getline(file,line)){
         // trim white space
-        line.erase(0,line.find_first_not_of("\t"));
-        line.erase(line.find_last_not_of("\t\r\n")+1);
+        line.erase(0,line.find_first_not_of(" \t"));
+        line.erase(line.find_last_not_of(" \t\r\n")+1);
         // skip empty or comment lines
         if(line.empty() || line[0]=='#') continue;
 
@@ -198,7 +198,7 @@ AppInfo AppManager::parseDesktopFile(const std::filesystem::path& path) {
 
             while (std::getline(ss, mime, ';')) {
                 if (!mime.empty()) {
-                    app.mineTypes.push_back(mime);
+                    app.mimeTypes.push_back(mime);
                 }
             }
         }
@@ -246,7 +246,7 @@ std::filesystem::path AppManager::resolveExecutable(const std::string& exec) {
 // e.g. /home/user/video.mp4 → "video/mp4"
 std::string AppManager::getMimeTypeForFile(const std::filesystem::path& filePath) {
     try {
-        std::string command = "file --mine-type -b\""+filePath.string()+"\" 2>/dev/null";
+        std::string command = "file --mime-type -b \"" + filePath.string() + "\" 2>/dev/null";
     
         FILE* pipe = popen(command.c_str(), "r");
         if(!pipe) return {};

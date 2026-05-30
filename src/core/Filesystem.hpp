@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -9,9 +10,27 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+
+
+// inline function fot defaultmainpath and  favfilepath
+inline std::filesystem::path getDefaultMainPath(){
+    const char* home = std::getenv("HOME");
+    return home?std::filesystem::path(home):"/";
+}
+
+
+inline std::filesystem::path getFavoritesFile(){
+    const char* home = std::getenv("HOME");
+    if(!home){
+        return "favorites.txt";
+    }
+    return std::filesystem::path(home)/".config"/"filemanager"/"favorites.txt";
+}
+
 // Default path shown when file manager launches (set this to your desired path)
-const std::filesystem::path DEFAULT_MAIN_PATH = "";
-const std::string FAV_FILE = "";
+const std::filesystem::path DEFAULT_MAIN_PATH = getDefaultMainPath();
+const std::string FAV_FILE = getFavoritesFile();
+
 
 // Represents a single file or folder shown as a tile in the UI
 struct File {
