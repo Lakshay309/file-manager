@@ -67,14 +67,24 @@ void AppManager::loadApps(){
     #if defined(__linux__)
     // Ref: https://specifications.freedesktop.org/desktop-entry-spec/latest/
 
-    const std::vector<std::filesystem::path> desktopDirs={
-        "/usr/share/applications",          // System-wide apps (most common)
-        "/usr/local/share/applications",    // Locally compiled/installed apps
-        std::filesystem::path(getenv("HOME") ? getenv("HOME") : "") / ".local/share/applications", // User-installed apps
-        "/var/lib/flatpak/exports/share/applications",  // Flatpak apps
-        std::filesystem::path(getenv("HOME") ? getenv("HOME") : "") / ".local/share/flatpak/exports/share/applications", // User Flatpak
-        "/snap/bin",                        // Snap apps (executables, not .desktop)
+        const char* home = getenv("HOME");
+    std::filesystem::path homeDir = home ? home : "";
+ 
+    const std::vector<std::filesystem::path> desktopDirs = {
+        "/usr/share/applications",                                          // System-wide apps
+        "/usr/local/share/applications",                                    // Locally compiled/installed
+        homeDir / ".local/share/applications",                              // User-installed apps
+ 
+        // ── Flatpak ──────────────────────────────────────────────────────
+        "/var/lib/flatpak/exports/share/applications",                      // System Flatpak
+        homeDir / ".local/share/flatpak/exports/share/applications",        // User Flatpak
+ 
+        // ── Snap ─────────────────────────────────────────────────────────
+        // Snap stores .desktop files here, NOT in /snap/bin (that's just wrappers)
+        "/var/lib/snapd/desktop/applications",                              // System Snap apps
+        homeDir / "snap",                                                   // User-level Snap (some distros)
     };
+
 
     for(const auto& dir:desktopDirs){
         if(std::filesystem::exists(dir) && std::filesystem::is_directory(dir)){
@@ -177,7 +187,7 @@ AppInfo AppManager::parseDesktopFile(const std::filesystem::path& path) {
             std::istringstream ss(value);
             std::string token;
             bool first = true;
-            // FIXME: doubt here 
+            
             while(ss>>token){
                 if(token[0]=='%') continue; //place holder ignored
                 if(first){
@@ -188,6 +198,9 @@ AppInfo AppManager::parseDesktopFile(const std::filesystem::path& path) {
             app.executable = std::filesystem::path(exec).filename().string();
 
             app.execPath = resolveExecutable(exec);
+            if(app.execPath.empty()){
+                app.execPath = resolveSnapExecutable(exec);
+            }
         }
         else if (key == "Icon"){
             app.icon = value;
@@ -231,7 +244,7 @@ std::filesystem::path AppManager::resolveExecutable(const std::string& exec) {
 
     std::istringstream ss(pathEnv);
     std::string dir;
-    // FIXME: check this also 
+
     while (std::getline(ss, dir, ':')) {
         auto candidate = std::filesystem::path(dir) / exec;
         if (std::filesystem::exists(candidate)) {
@@ -266,6 +279,60 @@ std::string AppManager::getMimeTypeForFile(const std::filesystem::path& filePath
         return {};
     }
 }
+
+
+std::filesystem::path AppManager::resolveSnapExecutable(const std::string& exec) {
+    if(exec.empty()) return {};
+ 
+    // 1. Snap wrapper scripts live in /snap/bin — fastest check
+    auto snapBinPath = std::filesystem::path("/snap/bin") / exec;
+    if(std::filesystem::exists(snapBinPath)){
+        return snapBinPath;
+    }
+ 
+    // 2. Walk each installed snap package and check its inner binary tree
+    std::filesystem::path snapRoot("/snap");
+    if(!std::filesystem::exists(snapRoot) || !std::filesystem::is_directory(snapRoot)){
+        return {};
+    }
+ 
+    try {
+        for(const auto& snapEntry : std::filesystem::directory_iterator(snapRoot)){
+            if(!snapEntry.is_directory()) continue;
+ 
+            std::string snapName = snapEntry.path().filename().string();
+ 
+            // Skip meta-directories used by snapd itself
+            if(snapName == "bin" || snapName == "core" || snapName == "core18" ||
+               snapName == "core20" || snapName == "core22" || snapName == "snapd"){
+                continue;
+            }
+ 
+            // /snap/<name>/current is a symlink to the active revision
+            auto currentDir = snapEntry.path() / "current";
+            if(!std::filesystem::exists(currentDir)) continue;
+ 
+            // Common binary locations inside a snap
+            const std::vector<std::filesystem::path> searchPaths = {
+                currentDir / "usr" / "bin",
+                currentDir / "bin",
+                currentDir / "usr" / "local" / "bin",
+            };
+ 
+            for(const auto& searchDir : searchPaths){
+                auto candidate = searchDir / exec;
+                if(std::filesystem::exists(candidate)){
+                    return candidate;
+                }
+            }
+        }
+    } catch(const std::exception&) {
+        // /snap may not be readable without elevated permissions — ignore
+    }
+ 
+    return {};
+}
+
 
 #endif // __linux__
 

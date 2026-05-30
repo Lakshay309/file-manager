@@ -41,6 +41,8 @@ class AppManager{
             std::filesystem::path resolveExecutable(const std::string& exec);
 
             std::string getMimeTypeForFile(const std::filesystem::path& filePath);
+            
+            std::filesystem::path resolveSnapExecutable(const std::string& exec);
         #endif
 
         #if defined(_WIN32) || defined(_WIN64)
