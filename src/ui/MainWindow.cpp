@@ -300,72 +300,70 @@ void MainWindow::showContextMenu(const QPoint& globalPos, bool hasSelection) {
         menu.addAction("☆  Toggle Favourite", this, &MainWindow::onToggleFav);
         menu.addSeparator();
 
-        // Open With submenu
-        auto* openWithMenu = menu.addMenu("Open with...");
-        openWithMenu->setStyleSheet("QMenu { menu-scrollable: 1; };");
-        int maxVisible = 8;
-        int itemHeight = 28; // approximate px per menu item
-        openWithMenu->setMaximumHeight(maxVisible * itemHeight);
-        std::filesystem::path targetForOpen = selectedPath_.isEmpty() ? fileSystem_.getCurrentFilePath() : std::filesystem::path(selectedPath_.toStdString());  
+        
+        menu.addSeparator();
+        menu.addAction("ℹ  Properties", this, [this]() { onProperties(selectedPath_); });
+    }
+    // Open With submenu
+    auto* openWithMenu = menu.addMenu("Open with...");
+    std::filesystem::path targetForOpen = selectedPath_.isEmpty() ? fileSystem_.getCurrentFilePath() : std::filesystem::path(selectedPath_.toStdString());  
 
-        auto appsForFile = appManager_.getAppForFile(
-            targetForOpen
-        );
-        if (appsForFile.empty()) {
-            openWithMenu->addAction("No apps found")->setEnabled(false);
-        } else {
-            // Container widget that goes inside the menu
-            auto* container = new QWidget;
-            auto* vbox = new QVBoxLayout(container);
-            vbox->setContentsMargins(4, 4, 4, 4);
-            vbox->setSpacing(2);
+    // TODO: good for now 
+    auto appsForFile = appManager_.getAllApps();
+    // getAppForFile(
+    //     targetForOpen
+    // );
+    if (appsForFile.empty()) {
+        openWithMenu->addAction("No apps found")->setEnabled(false);
+    } else {
+        // Container widget that goes inside the menu
+        auto* container = new QWidget;
+        auto* vbox = new QVBoxLayout(container);
+        vbox->setContentsMargins(4, 4, 4, 4);
+        vbox->setSpacing(2);
 
-            for (const auto& app : appsForFile) {
-                QString appName = QString::fromStdString(app.name);
-                QString appPath = QString::fromStdString(app.execPath.string());
+        for (const auto& app : appsForFile) {
+            QString appName = QString::fromStdString(app.name);
+            QString appPath = QString::fromStdString(app.execPath.string());
 
-                auto* btn = new QPushButton(appName);
-                btn->setFlat(true);
-                btn->setCursor(Qt::PointingHandCursor);
-                btn->setStyleSheet(R"(
-                    QPushButton {
-                        text-align: left;
-                        padding: 5px 12px;
-                        border-radius: 4px;
-                        background: transparent;
-                    }
-                    QPushButton:hover { background-color: #4a90d9; color: white; }
-                )");
-
-                connect(btn, &QPushButton::clicked, this, [this, appPath, &menu]() {
-                    menu.close();
-                    onOpenWith(appPath);
-                });
-
-                vbox->addWidget(btn);
-            }
-
-            // Scroll area wrapping the button list
-            auto* scroll = new QScrollArea;
-            scroll->setWidget(container);
-            scroll->setWidgetResizable(true);
-            scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-            scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-            scroll->setFrameShape(QFrame::NoFrame);
-
-            // Cap height at 8 items worth, expand if fewer
-            int itemH = 31;
-            int capH  = 8 * itemH;
-            int realH = appsForFile.size() * itemH + 8;
-            scroll->setFixedSize(220, std::min(realH, capH));
-
-            auto* widgetAction = new QWidgetAction(openWithMenu);
-            widgetAction->setDefaultWidget(scroll);
-            openWithMenu->addAction(widgetAction);
+            auto* btn = new QPushButton(appName);
+            btn->setFlat(true);
+            btn->setCursor(Qt::PointingHandCursor);
+            btn->setStyleSheet(R"(
+                QPushButton {
+                    text-align: left;
+                    padding: 5px 12px;
+                    border-radius: 4px;
+                    background: transparent;
                 }
+                QPushButton:hover { background-color: #4a90d9; color: white; }
+            )");
 
-                menu.addSeparator();
-                menu.addAction("ℹ  Properties", this, [this]() { onProperties(selectedPath_); });
+            connect(btn, &QPushButton::clicked, this, [this, appPath, &menu]() {
+                menu.close();
+                onOpenWith(appPath);
+            });
+
+            vbox->addWidget(btn);
+        }
+
+        // Scroll area wrapping the button list
+        auto* scroll = new QScrollArea;
+        scroll->setWidget(container);
+        scroll->setWidgetResizable(true);
+        scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        scroll->setFrameShape(QFrame::NoFrame);
+
+        // Cap height at 8 items worth, expand if fewer
+        int itemH = 31;
+        int capH  = 8 * itemH;
+        int realH = appsForFile.size() * itemH + 8;
+        scroll->setFixedSize(220, std::min(realH, capH));
+
+        auto* widgetAction = new QWidgetAction(openWithMenu);
+        widgetAction->setDefaultWidget(scroll);
+        openWithMenu->addAction(widgetAction);
             }
 
             menu.addAction("⎙  Paste",       this, &MainWindow::onPaste);
@@ -450,7 +448,7 @@ void MainWindow::setSelection(const QString& path) {
     cutAction_->setEnabled(hasFile);
     renameAction_->setEnabled(hasFile);
     deleteAction_->setEnabled(hasFile);
-    favAction_->setEnabled(hasFile && !std::filesystem::is_directory(path.toStdString()));
+    favAction_->setEnabled(hasFile);
     updateStatusBar();
 }
 

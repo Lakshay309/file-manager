@@ -18,6 +18,12 @@ AppManager::AppManager(){
 // Returns all installed apps loads from disk on first call cached after
 std::vector<AppInfo> AppManager::getAllApps(){
     if(!loaded_) loadApps();
+    for(const auto& app : cachedApps_){
+        fprintf(stderr, "APP: [%s] exec=[%s] path=[%s]\n",
+            app.name.c_str(),
+            app.executable.c_str(),
+            app.execPath.string().c_str());
+    }
     return cachedApps_;
 }
 
@@ -71,18 +77,15 @@ void AppManager::loadApps(){
     std::filesystem::path homeDir = home ? home : "";
  
     const std::vector<std::filesystem::path> desktopDirs = {
-        "/usr/share/applications",                                          // System-wide apps
-        "/usr/local/share/applications",                                    // Locally compiled/installed
-        homeDir / ".local/share/applications",                              // User-installed apps
- 
-        // ── Flatpak ──────────────────────────────────────────────────────
-        "/var/lib/flatpak/exports/share/applications",                      // System Flatpak
-        homeDir / ".local/share/flatpak/exports/share/applications",        // User Flatpak
- 
-        // ── Snap ─────────────────────────────────────────────────────────
-        // Snap stores .desktop files here, NOT in /snap/bin (that's just wrappers)
-        "/var/lib/snapd/desktop/applications",                              // System Snap apps
-        homeDir / "snap",                                                   // User-level Snap (some distros)
+        "/usr/local/share/applications",
+        homeDir / ".local/share/applications",
+        "/var/lib/flatpak/exports/share/applications", 
+        homeDir / ".local/share/flatpak/exports/share/applications",
+        "/var/lib/snapd/desktop/applications",      
+        homeDir / "snap",     
+        "/var/lib/snapd/desktop/applications/",
+        "/snap",                               
+        "/usr/share/applications",
     };
 
 
@@ -93,15 +96,20 @@ void AppManager::loadApps(){
     }
 
     // Remove duplicates by executable name
-    std::sort(cachedApps_.begin(),cachedApps_.end(),[](const AppInfo& a,const AppInfo& b){
-        return a.name<b.name;
-    });
-    cachedApps_.erase(
-        std::unique(cachedApps_.begin(),cachedApps_.end(),[](const AppInfo& a, const AppInfo& b){
-            return a.executable==b.executable;
-        }),
-        cachedApps_.end()
-    );
+    // Sort by executable so std::unique can find all duplicates
+std::sort(cachedApps_.begin(), cachedApps_.end(), [](const AppInfo& a, const AppInfo& b){
+    return a.executable < b.executable;
+});
+cachedApps_.erase(
+    std::unique(cachedApps_.begin(), cachedApps_.end(), [](const AppInfo& a, const AppInfo& b){
+        return a.executable == b.executable;
+    }),
+    cachedApps_.end()
+);
+// Re-sort by name for display
+std::sort(cachedApps_.begin(), cachedApps_.end(), [](const AppInfo& a, const AppInfo& b){
+    return a.name < b.name;
+});
 
     #elif defined(_WIN32) || defined(_WIN64)
         // TODO: Windows — read installed apps from:
@@ -121,7 +129,8 @@ void AppManager::loadApps(){
 
 void AppManager::scanDesktopFiles(const std::filesystem::path& dir) {
     try {
-        for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(
+                dir, std::filesystem::directory_options::skip_permission_denied)) {
             if (entry.path().extension() == ".desktop") {
                 AppInfo app = parseDesktopFile(entry.path());
 
@@ -235,7 +244,16 @@ std::filesystem::path AppManager::resolveExecutable(const std::string& exec) {
     std::filesystem::path p(exec);
 
     if (p.is_absolute()){
-        return std::filesystem::exists(p)? p : std::filesystem::path{}; 
+        auto snapWrapper = std::filesystem::path("/snap/bin") / p.filename();
+        if(std::filesystem::exists(snapWrapper)){
+            return snapWrapper;
+        }
+        return std::filesystem::exists(p) ? p : std::filesystem::path{};
+    }
+    
+    auto snapCandidate = std::filesystem::path("/snap/bin") / exec;
+    if(std::filesystem::exists(snapCandidate)){
+        return snapCandidate;
     }
 
     // Search PATH environment variable
