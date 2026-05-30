@@ -301,42 +301,42 @@ std::string AppManager::getMimeTypeForFile(const std::filesystem::path& filePath
 
 std::filesystem::path AppManager::resolveSnapExecutable(const std::string& exec) {
     if(exec.empty()) return {};
- 
+
     // 1. Snap wrapper scripts live in /snap/bin — fastest check
     auto snapBinPath = std::filesystem::path("/snap/bin") / exec;
     if(std::filesystem::exists(snapBinPath)){
         return snapBinPath;
     }
- 
+
     // 2. Walk each installed snap package and check its inner binary tree
     std::filesystem::path snapRoot("/snap");
     if(!std::filesystem::exists(snapRoot) || !std::filesystem::is_directory(snapRoot)){
         return {};
     }
- 
+
     try {
         for(const auto& snapEntry : std::filesystem::directory_iterator(snapRoot)){
             if(!snapEntry.is_directory()) continue;
- 
+
             std::string snapName = snapEntry.path().filename().string();
- 
+
             // Skip meta-directories used by snapd itself
             if(snapName == "bin" || snapName == "core" || snapName == "core18" ||
-               snapName == "core20" || snapName == "core22" || snapName == "snapd"){
+                snapName == "core20" || snapName == "core22" || snapName == "snapd"){
                 continue;
             }
- 
+
             // /snap/<name>/current is a symlink to the active revision
             auto currentDir = snapEntry.path() / "current";
             if(!std::filesystem::exists(currentDir)) continue;
- 
+
             // Common binary locations inside a snap
             const std::vector<std::filesystem::path> searchPaths = {
                 currentDir / "usr" / "bin",
                 currentDir / "bin",
                 currentDir / "usr" / "local" / "bin",
             };
- 
+
             for(const auto& searchDir : searchPaths){
                 auto candidate = searchDir / exec;
                 if(std::filesystem::exists(candidate)){
@@ -347,7 +347,7 @@ std::filesystem::path AppManager::resolveSnapExecutable(const std::string& exec)
     } catch(const std::exception&) {
         // /snap may not be readable without elevated permissions — ignore
     }
- 
+
     return {};
 }
 

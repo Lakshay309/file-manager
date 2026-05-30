@@ -28,9 +28,9 @@
 #include <QScrollArea>
 #include <QWidgetAction>
 
-// ─────────────────────────────────────────────
+
 //  Constructor
-// ─────────────────────────────────────────────
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -57,9 +57,9 @@ MainWindow::MainWindow(QWidget *parent)
     refreshFileView();
 }
 
-// ─────────────────────────────────────────────
+
 //  Build: Top Bar
-// ─────────────────────────────────────────────
+
 
 void MainWindow::buildTopBar(QVBoxLayout* mainLayout) {
     auto *topPanel = new QFrame;
@@ -94,9 +94,9 @@ void MainWindow::buildTopBar(QVBoxLayout* mainLayout) {
     mainLayout->addWidget(topPanel);
 }
 
-// ─────────────────────────────────────────────
+
 //  Build: Action Toolbar
-// ─────────────────────────────────────────────
+
 
 void MainWindow::buildToolBar() {
     actionToolBar_ = addToolBar("Actions");
@@ -137,9 +137,9 @@ void MainWindow::buildToolBar() {
     favAction_->setEnabled(false);
 }
 
-// ─────────────────────────────────────────────
+
 //  Build: File Views (grid + list stacked)
-// ─────────────────────────────────────────────
+
 
 void MainWindow::buildFileViews(QVBoxLayout* mainLayout) {
     viewStack_ = new QStackedWidget;
@@ -175,9 +175,9 @@ void MainWindow::buildFileViews(QVBoxLayout* mainLayout) {
     mainLayout->addWidget(viewStack_, 1);
 }
 
-// ─────────────────────────────────────────────
+
 //  Build: Status Bar
-// ─────────────────────────────────────────────
+
 
 void MainWindow::buildStatusBar() {
     statusLabel_ = new QLabel("Ready");
@@ -185,9 +185,9 @@ void MainWindow::buildStatusBar() {
     statusBar()->setObjectName("statusBar");
 }
 
-// ─────────────────────────────────────────────
+
 //  Connect All Signals
-// ─────────────────────────────────────────────
+
 
 void MainWindow::connectSignals() {
 
@@ -374,9 +374,9 @@ void MainWindow::showContextMenu(const QPoint& globalPos, bool hasSelection) {
             menu.exec(globalPos);
         }
 
-// ─────────────────────────────────────────────
+
 //  Refresh File View
-// ─────────────────────────────────────────────
+
 
 void MainWindow::refreshFileView() {
     gridView_->clear();
@@ -437,9 +437,9 @@ void MainWindow::refreshFileView() {
     favAction_->setEnabled(false);
 }
 
-// ─────────────────────────────────────────────
+
 //  Selection
-// ─────────────────────────────────────────────
+
 
 void MainWindow::setSelection(const QString& path) {
     selectedPath_ = path;
@@ -456,9 +456,9 @@ QString MainWindow::currentSelectedPath() const {
     return selectedPath_;
 }
 
-// ─────────────────────────────────────────────
+
 //  File Actions
-// ─────────────────────────────────────────────
+
 
 void MainWindow::onCopy() {
     if (selectedPath_.isEmpty()) return;
@@ -606,9 +606,9 @@ void MainWindow::onOpenWith(const QString& appPath) {
     );
 }
 
-// ─────────────────────────────────────────────
+
 //  Status Bar
-// ─────────────────────────────────────────────
+
 
 void MainWindow::updateStatusBar() {
     auto files = fileSystem_.getAllFileInCurrentDir();
@@ -630,9 +630,9 @@ void MainWindow::updateStatusBar() {
     );
 }
 
-// ─────────────────────────────────────────────
+
 //  Theme
-// ─────────────────────────────────────────────
+
 
 void MainWindow::applyTheme(bool dark) {
     themeButton_->setText(dark ? "🌙" : "☀");
